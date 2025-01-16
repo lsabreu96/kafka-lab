@@ -8,8 +8,9 @@ services:
       KAFKA_PROCESS_ROLES: controller # controller seria o zookeeper[1]
       KAFKA_NODE_ID: 1
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093 # Não entendi o que é isso, as referências apontam para portas que não existem com exceção de [2] e só controllers podem fazer parte
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER' #Nem ideia, mas precisa o nome que aparece aqui é o que aparece no KAFKA_LISTENERS. Se os nomes divergem, dá o erro abaixo
-                                        #"Error creating broker listeners from 'CONTROLLER://zookeeper:9093': No security protocol defined for listener CONTROLLER"
+      #Nem ideia, mas precisa o nome que aparece aqui é o que aparece no KAFKA_LISTENERS. Se os nomes divergem, dá o erro abaixo
+      #"Error creating broker listeners from 'CONTROLLER://zookeeper:9093': No security protocol defined for listener CONTROLLER"
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER' 
       KAFKA_LISTENERS: 'CONTROLLER://zookeeper:9093'
       CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
 
@@ -24,6 +25,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9093 # O endereço do proprio broker a ser enviado pro KRaft p mostrar aos clientes [3]
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
 
@@ -39,5 +41,6 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-2:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper

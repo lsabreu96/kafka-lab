@@ -1,0 +1,43 @@
+# As referencias[n] tão no arquivo referencias-docker-compose.yaml 
+services:
+  zookeeper:
+    image: confluentinc/cp-kafka:7.8.0
+    ports:
+      - 9091:9093
+    environment:
+      KAFKA_PROCESS_ROLES: controller # controller seria o zookeeper[1]
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093 # Não entendi o que é isso, as referências apontam para portas que não existem com exceção de [2] e só controllers podem fazer parte
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER' #Nem ideia, mas precisa o nome que aparece aqui é o que aparece no KAFKA_LISTENERS. Se os nomes divergem, dá o erro abaixo
+                                        #"Error creating broker listeners from 'CONTROLLER://zookeeper:9093': No security protocol defined for listener CONTROLLER"
+      KAFKA_LISTENERS: 'CONTROLLER://zookeeper:9093'
+      CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
+
+  broker-1:
+    image: confluentinc/cp-kafka:7.8.0
+    ports:
+      - 9092:9093  
+    environment:
+      KAFKA_PROCESS_ROLES: broker # broker é o broker usual [1]
+      KAFKA_NODE_ID: 2
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9093 # O endereço do proprio broker a ser enviado pro KRaft p mostrar aos clientes [3]
+    depends_on:
+      - zookeeper
+
+
+  broker-2:
+    image: confluentinc/cp-kafka:7.8.0
+    ports:
+      - 9093:9093  
+    environment:
+      KAFKA_PROCESS_ROLES: broker
+      KAFKA_NODE_ID: 3
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-2:9093
+    depends_on:
+      - zookeeper

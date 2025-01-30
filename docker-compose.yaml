@@ -1,46 +1,76 @@
 # As referencias[n] tão no arquivo referencias-docker-compose.yaml 
 services:
-  zookeeper:
+  controller:
     image: confluentinc/cp-kafka:7.8.0
-    ports:
-      - 9091:9093
     environment:
-      KAFKA_PROCESS_ROLES: controller # controller seria o zookeeper[1]
+      #### EXIGIDO POR SER USANDO O MODO KRAFT
+      KAFKA_PROCESS_ROLES: controller # controller seria o controller[1]
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093 # Não entendi o que é isso, as referências apontam para portas que não existem com exceção de [2] e só controllers podem fazer parte
+      # Parece que a 9093 é o padrão da porta interna do broker
+      # como o controller não é exposto, não precisa fazer bind de porta
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller:9093 
       #Nem ideia, mas precisa o nome que aparece aqui é o que aparece no KAFKA_LISTENERS. Se os nomes divergem, dá o erro abaixo
-      #"Error creating broker listeners from 'CONTROLLER://zookeeper:9093': No security protocol defined for listener CONTROLLER"
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER' 
-      KAFKA_LISTENERS: 'CONTROLLER://zookeeper:9093'
-      CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
+      #### FIM DO BLOCO EXIGIDO
+      #### EXIGIDO POR SER UM KAFKA
 
+      CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
+      #### FIM DO BLOCO EXIGIDO
+
+      KAFKA_LISTENERS: CONTROLLER://controller:9093
+      # Cada listener declarado no KAFKA_LISTENERS precisa declarar um protocolo de autenticação
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT
+
+  
   broker-1:
     image: confluentinc/cp-kafka:7.8.0
-    ports:
-      - 9092:9093  
     environment:
       KAFKA_PROCESS_ROLES: broker # broker é o broker usual [1]
       KAFKA_NODE_ID: 2
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9093 # O endereço do proprio broker a ser enviado pro KRaft p mostrar aos clientes [3]
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    depends_on:
-      - zookeeper
+      #### FIM DO BLOCO MINIMO
 
+      ## PRECISA SER MENOR IGUAL O NUMERO DE BROKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      
+      # Listeners são os endereços internos que o Kafka vai servir
+      # advertised é o endereço que é devolvido p fora
+      # Esse broker vai ser só p uso interno, então ele não tem bind de porta
+      # De novo usando a 9093 por padrão
+      KAFKA_LISTENERS: INTERNO://broker-1:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNO://broker-1:9093
+
+      # Cada listener declarado no KAFKA_LISTENERS precisa declarar um protocolo de autenticação
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNO:PLAINTEXT,CONTROLLER:PLAINTEXT
+    
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNO
+    
+    depends_on:
+      - controller
 
   broker-2:
     image: confluentinc/cp-kafka:7.8.0
     ports:
-      - 9093:9093  
-    environment:
-      KAFKA_PROCESS_ROLES: broker
+       # aqui tanto faz a porta, desde que bata com o que tá no KAFKA_LISTENERS
+       # para externo
+      - 9095:9095
+    environment: 
+      KAFKA_PROCESS_ROLES: broker 
       KAFKA_NODE_ID: 3
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@zookeeper:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       CLUSTER_ID: a9a72bc2-6402-4d19-b689-f7054eb2b874
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-2:9093
+      #### FIM DO BLOCO MINIMO
+
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      
+      # O broker-2 é o broker a ser exposto para fora, poderia fazer via um 
+      # listener diferente 
+      KAFKA_LISTENERS: INTERNO://broker-2:9093,EXTERNO://broker-2:9095
+      KAFKA_ADVERTISED_LISTENERS: INTERNO://broker-2:9093,EXTERNO://localhost:9095
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNO:PLAINTEXT,EXTERNO:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNO
     depends_on:
-      - zookeeper
+      - controller

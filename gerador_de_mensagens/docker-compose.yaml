@@ -1,0 +1,15 @@
+services:
+  produtor:
+    build: .
+    container_name: produtor
+    environment:
+      # é o endereço do broker_b declarado na linha 44 no docker-compose.yaml na raiz do repositório
+      # não usa localhost pq tá na mesma rede que o broker_b
+      KAFKA_BOOTSTRAP_SERVER: "broker_b:9093"
+      KAFKA_TOPIC: "topic1"
+    networks:
+      - kafka-lab_kafka
+
+networks:
+  kafka-lab_kafka:
+    external: true

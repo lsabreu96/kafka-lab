@@ -1,0 +1,17 @@
+services:
+  produtor:
+    build: .
+    container_name: consumidor
+    environment:
+      # é o endereço do broker_b declarado na linha 44 no docker-compose.yaml na raiz do repositório
+      # não usa localhost pq tá na mesma rede que o broker_b
+      KAFKA_BOOTSTRAP_SERVER: "broker-2:9093"
+      KAFKA_CONSUMER_TOPICS: "topic1"
+      KAFKA_CONSUMER_GROUP_ID: "cnsumer"
+      KAFKA_OFFSET_CONFIG: "earliest"
+    networks:
+      - kafka-lab_default
+
+networks:
+  kafka-lab_default:
+    external: true

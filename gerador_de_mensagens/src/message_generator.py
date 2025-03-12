@@ -1,3 +1,4 @@
+# Adaptado de https://github.com/confluentinc/confluent-kafka-python
 import time
 from faker import Faker
 from datetime import datetime
@@ -10,7 +11,7 @@ import os
 fake = Faker()
 produtor = Producer({'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVER')})
 
-usuarios = [fake.name() for _ in range(3)]
+usuarios = ['João', 'Maria', 'José']
 
 def gerar_saida():
     while True:

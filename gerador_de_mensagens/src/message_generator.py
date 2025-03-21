@@ -25,7 +25,7 @@ def gerar_saida():
         
         produtor.produce(
             os.getenv('KAFKA_TOPIC'),
-            f"{hora_atual}:{usuario}:{valor}:{tipo}".encode('utf-8')
+            f"{hora_atual}<>{usuario}<>{valor}<>{tipo}".encode('utf-8')
         )
         
         time.sleep(1)
